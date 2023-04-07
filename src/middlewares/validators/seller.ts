@@ -54,23 +54,23 @@ export const login = [
   body("password", "please enter password correctly ").isLength({ min: 5 }),
 ];
 export const edit = [
-  body("email", "please enter email correctly ").isEmail().isEmpty(),
-  body("password", "please enter password correctly ").isLength({ min: 5 }),
-  body("phoneNumber", "please enter phoneNumber correctly ")
+  body("email", "please enter email correctly ").optional(),
+  body("password", "please enter password correctly ").optional().isLength({ min: 5 }),
+  body("phoneNumber", "please enter phoneNumber correctly ").optional().isEmpty()
     .isLength({ max: 11 })
     .custom(async (mobileNumber) => {
       if (mobileNumber.slice(0, 2) !== "09") {
         return Promise.reject("please enter your mobile number correctly");
       }
     }),
-  body("firstName", "please enter firstName correctly "),
-  body("lastName", "please enter lastName correctly "),
-  body("personalId", "please enter personalId correctly ").isLength({ min: 9 }),
-  body("address", "please enter address correctly ").isLength({ max: 30 }),
-  body("city", "please enter city correctly ").isLength({ min: 3 }),
-  body("province", "please enter province correctly ").isLength({ min: 1 }),
-  body("shopName", "please enter shopName correctly "),
-  body("shabaNumber", "please enter shabaNumber correctly ").isLength({
+  body("firstName", "please enter firstName correctly ").optional(),
+  body("lastName", "please enter lastName correctly ").optional(),
+  body("personalId", "please enter personalId correctly ").optional().isLength({ min: 9 }),
+  body("address", "please enter address correctly ").optional().isLength({min:2, max: 30 }),
+  body("city", "please enter city correctly ").optional().isLength({ min: 3 }),
+  body("province", "please enter province correctly ").optional().isLength({ min: 1 }),
+  body("shopName", "please enter shopName correctly ").optional(),
+  body("shabaNumber", "please enter shabaNumber correctly ").optional().isLength({
     min: 24,
     max: 26,
   }),

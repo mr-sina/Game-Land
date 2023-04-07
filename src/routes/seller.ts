@@ -20,7 +20,7 @@ router.post("/login", ...login, sellerController.login);
 
 
 //edit seller info
-router.put("/edit/:id", ...edit, sellerController.update);
+router.put("/edit/:id", ...edit, sellerController.edit);
 
 router.post("/new-password", sellerController.newPassword);
 

@@ -151,22 +151,22 @@ export async function newPassword(req, res, next) {
 }
 
 
-export async function update(req, res, next): Promise<void> {
+export async function edit(req, res, next): Promise<void> {
   const errors = VR(req);
   if (errors.length > 0) {
     return res.status(400).json({ msg: errors[0], success: false });
   }
-  const {sellerId} = req.params
+  const {id} = req.params
   const sellerInfo: SellerInterface = req.body
   try {
-      let seller: any = Seller.findById(sellerId)
+      let seller: any = Seller.findById(id)
       if (!seller) {
           const error: JsError = new Error('Could not find seller')
           error.statusCode = 404
           next(error)
       }
-      seller = sellerInfo
-      const result = await seller.save()
+      
+      const result = await Seller.findByIdAndUpdate(id,{ $set: sellerInfo })
       res.status(201).json({message: 'seller updated!', sellerId: result._id})
   } catch (err) {
       err.statusCode || 500

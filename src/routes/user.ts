@@ -16,6 +16,8 @@ router.get("/get-users", userController.getUsers);
 router.post("/login", ...login, userController.login);
 //register
 router.post("/register", ...signUp, userController.register);
+
+router.put("/edit/:id", userController.addComments);
 //new password
 router.post("/new-password", ...newPassword, userController.newPassword);
 
