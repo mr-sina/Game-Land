@@ -9,13 +9,13 @@ import Payment from "../models/payment";
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
+import { UserInfo } from "os";
 
 interface UserType {
   firstName: string;
   lastName: string;
   email: string;
   password: string;
-  mobileNumber: string;
 }
 
 interface CommentType {
@@ -34,6 +34,27 @@ const transporter = nodemailer.createTransport({
     pass: "6cea96dcb0c8d7"
   }
 });
+export async function edit(req, res, next): Promise<void> {
+  const errors = VR(req);
+  if (errors.length > 0) {
+    return res.status(400).json({ msg: errors[0], success: false });
+  }
+  const {id} = req.params
+  const userInfo: UserType = req.body
+  try {
+      let seller: any = User.findById(id)
+      if (!seller) {
+          const error= new Error('Could not find seller')
+          next(error)
+      }
+      
+      const result = await User.findByIdAndUpdate(id,{ $set: userInfo })
+      res.status(201).json({message: 'seller updated!', sellerId: result._id})
+  } catch (err) {
+      err.statusCode || 500
+      next(err)
+  }
+}
 
 /**
  * @description user register function 
@@ -63,7 +84,7 @@ export async function register(req, res, next): Promise<void> {
     userInfo.password = await bcrypt.hash(userInfo.password, 12);
     
     //jwt
-    const token = await jwt.sign({ email: userInfo.email }, process.env.USER_JWT , { expiresIn: "3d" })
+    const token = await jwt.sign({userId: user._id }, process.env.USER_JWT , { expiresIn: "3d" })
     const newUser = await new User({
       ...userInfo,
       token: token
@@ -114,7 +135,7 @@ export async function login(req, res, next): Promise<void> {
       return res.json("Incorrect email or password")
     }
 
-    const token = await jwt.sign({ email }, process.env.USER_JWT , { expiresIn: "3d" })
+    const token = await jwt.sign({userId: user._id }, process.env.USER_JWT , { expiresIn: "3d" })
 
     return res.json({
       message: 'Auth successful',

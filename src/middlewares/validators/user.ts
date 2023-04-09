@@ -8,20 +8,22 @@ const jwt = require('jsonwebtoken');
 export const signUp = [
   body('firstName', 'please enter your first name correctly ').not().isEmpty(),
   body('lastName', 'please enter your last name correctly ').not().isEmpty(),
-  body('homeNumber', 'please enter your home number correctly ').not().isEmpty(),
   body('email', 'please enter email correctly ').isEmail(),
   body('password', 'please enter password correctly ').isLength({ min: 4 })
 ]
 
 export const login = [
   body('email', 'please enter email correctly ').isEmail(),
-  body('password', 'please enter password correctly ').isLength({ min: 5 })
+  body('password', 'please enter password correctly ').isLength({ min: 4})
 ]
 
-// export const login = [
-//   body('email', 'please enter email correctly ').isEmail(),
-//   body('password', 'please enter password correctly ').isLength({ min: 5 })
-// ]
+export const edit = [
+  body("email", "please enter email correctly ").optional(),
+  body("password", "please enter password correctly ").optional().isLength({ min: 5 }),
+  body("firstName", "please enter firstName correctly ").optional(),
+  body("lastName", "please enter lastName correctly ").optional(),
+  
+];
 
 export const reset = [
   body('email', 'please enter email correctly ').isEmail()
@@ -44,8 +46,8 @@ export const answer = [
 ]
 
 /**
- * @description admin/ isAuth function
- * @description this function is for checking admin authorization
+ * @description user/ isAuth function
+ * @description this function is for checking user authorization
  * @param {Object} req
  * @param {Object} res
  * @param {Object} next
@@ -59,6 +61,7 @@ export function isAuth(req, res, next){
       console.log(err)
       return res.status(401).send('not authorized')
     }
+    res.auth=decodedToken;
     next()
   })
 }
