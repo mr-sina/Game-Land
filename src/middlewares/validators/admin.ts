@@ -75,7 +75,7 @@ export const editSeller = [
 ];
 export const login = [
   body('email', 'please enter email correctly ').isEmail(),
-  body('password', 'please enter password correctly ').isLength({ min: 5 })
+  body('password', 'please enter password correctly ').isLength({ min: 4 })
 ]
 
 export const reset = [
@@ -89,13 +89,40 @@ export const newPassword = [
 
 
 
-export const Game = [
+export const createGame = [
   body('seller', 'please choose seller').not().isEmpty(),
   body('title', 'please choose title').not().isEmpty(),
   body('price', 'please choose price').not().isEmpty(),
   body('description', 'please choose description').optional(),
   body('discount', 'please choose discount').optional(),
   body('imageId', 'please choose imageId').optional()
+]
+export const editGame = [
+  body('seller', 'please choose seller').optional(),
+  body('title', 'please choose title').optional(),
+  body('price', 'please choose price').optional(),
+  body('description', 'please choose description').optional(),
+  body('discount', 'please choose discount').optional(),
+  body('imageId', 'please choose imageId').optional()
+]
+
+export const createDiscount = [
+  body('reason', 'please choose reason').not().isEmpty(),
+  body('code', 'please enter the name of the code').not().isEmpty(),
+  body('maxAmount', 'please choose maxAmount').not().isEmpty(),
+  body('expire', 'please choose expire').not().isEmpty(),
+  body('percent', 'please choose percent').not().isEmpty(),
+  body('quantity', 'please choose quantity').not().isEmpty(),
+  body('reason', 'please choose active').not().isEmpty(),
+]
+export const editDiscount = [
+  body('reason', 'please choose reason').optional(),
+  body('code', 'please enter the name of the code').optional(),
+  body('maxAmount', 'please choose maxAmount').optional(),
+  body('expire', 'please choose expire').optional(),
+  body('percent', 'please choose percent').optional(),
+  body('quantity', 'please choose quantity').optional(),
+  body('reason', 'please choose active').optional(),
 ]
 
 export const category = [
@@ -122,6 +149,7 @@ export function isAuth(req, res, next) {
         console.log(err)
         return res.status(401).send('not authorized')
       }
+      res.auth=decodedToken
       next()
     })
   } catch (error) {

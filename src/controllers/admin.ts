@@ -62,6 +62,8 @@ interface GameType {
 }
 
 interface CommentType {
+  productId: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
   text: string;
   title: string;
   cons: string[];
@@ -112,7 +114,7 @@ export async function register(req, res, next): Promise<void> {
 
     //jwt
     const token = await jwt.sign(
-      { lastName: adminInfo.lastName, email: adminInfo.email },
+      { adminId: admin._id },
       process.env.ADMIN_JWT,
       { expiresIn: "3d" }
     );
@@ -165,9 +167,13 @@ export async function login(req, res, next): Promise<void> {
       return res.json("Incorrect email or password");
     }
 
-    const token = await jwt.sign({ email }, process.env.ADMIN_JWT, {
-      expiresIn: "3d",
-    });
+    const token = await jwt.sign(
+      { adminId: admin._id },
+      process.env.ADMIN_JWT,
+      {
+        expiresIn: "3d",
+      }
+    );
 
     return res.json({
       message: "Auth successful",
@@ -282,6 +288,13 @@ export async function updateAdmin(req, res, next): Promise<void> {
   const errors = VR(req);
   if (errors.length > 0) {
     return res.status(400).json({ msg: errors[0], success: false });
+  }
+  const { adminId } = res.auth;
+  const foundAdmin = await Admin.findById(adminId);
+  if (foundAdmin.role != "fullManager") {
+    return res.json({
+      message: "you are not full manager",
+    });
   }
   try {
     if (mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -489,7 +502,6 @@ export async function addGame(req, res, next): Promise<void> {
     const newGame = await new Game({
       imageId: imageId,
       ...GameInfo,
-      seller: req.seller,
     });
     await newGame.save();
 
@@ -608,19 +620,15 @@ export async function addComment(req, res, next): Promise<void> {
   }
 
   try {
-    const prodId = req.body.GameId;
-    const foundGame = await Game.findById(prodId);
-    if (!foundGame) {
-      return res.json("Game not found");
-    }
+    
     const commentInfo: CommentType = req.body;
     const comment = await new Comment({
-      userId: "5fc7b0e7f901303484e370c0",
       ...commentInfo,
     });
     await comment.save();
     return res.json({
       message: comment,
+      result:'added successfully'
     });
   } catch (err) {
     next(err);
@@ -636,23 +644,9 @@ export async function addComment(req, res, next): Promise<void> {
  * @returns {Promise} returns a json message
  */
 export async function getComments(req, res, next): Promise<void> {
+  const { limit, skip, sort } = req.body;
   try {
-    const allComments = await Comment.find(
-      {},
-      {
-        limit: 15,
-        sort: { createAt: -1 },
-        populate: [
-          {
-            path: "userId",
-            select: "lastName",
-          },
-          {
-            path: "GameId",
-          },
-        ],
-      }
-    );
+    const allComments = await Comment.find().limit(limit).skip(skip).sort(sort);
 
     return res.json({
       message: allComments,
@@ -663,40 +657,8 @@ export async function getComments(req, res, next): Promise<void> {
 }
 
 /**
- * @description admin/ update comments function
- * @description this function is for choosing comments
- * @param {Object} req
- * @param {Object} res
- * @param {Object} next
- * @returns {Promise} returns a json message
- */
-export async function updateComment(req, res, next): Promise<void> {
-  try {
-    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
-      const comment: any = await Comment.findById(req.params.id);
-      if (!comment) {
-        return res.json("There is not any comment with this id");
-      }
-      comment.check = true;
-      await comment.save();
-
-      return res.json({
-        message: "update comment successfuly",
-        comment,
-      });
-    } else {
-      return res.json({
-        message: "comment not fount with this id.",
-      });
-    }
-  } catch (err) {
-    next(err);
-  }
-}
-
-/**
- * @description admin/ delete comments function
- * @description this function is for deleting comments
+ * @description admin/ delete comment function
+ * @description this function is for deleting comment
  * @param {Object} req
  * @param {Object} res
  * @param {Object} next
@@ -838,11 +800,10 @@ export async function deleteCategory(req, res, next): Promise<void> {
  * @returns {Promise} returns a json message
  */
 export async function updateProfile(req, res, next) {
+  const { adminId } = res.auth;
   try {
-    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
-      if (req.body.email) req.body.email = req.admin.email;
-
-      await Admin.findByIdAndUpdate(req.params.id, { $set: { ...req.body } });
+    if (mongoose.Types.ObjectId.isValid(adminId)) {
+      await Admin.findByIdAndUpdate(adminId, { $set: { ...req.body } });
       return res.json({
         message: "update profile successfuly",
       });
@@ -892,7 +853,31 @@ export async function updateProfile(req, res, next) {
 //   };
 
 /**
- * @description admin/ update Discount function
+ * @description admin/ all discounts function
+ * @description this function is for showing all comments
+ * @param {Object} req
+ * @param {Object} res
+ * @param {Object} next
+ * @returns {Promise} returns a json message
+ */
+export async function getDiscounts(req, res, next): Promise<void> {
+  const { limit, skip, sort } = req.body;
+  try {
+    const allDiscounts = await Comment.find()
+      .limit(limit)
+      .skip(skip)
+      .sort(sort);
+
+    return res.json({
+      message: allDiscounts,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * @description admin/ create Discount function
  * @description this function is for add Discount
  * @param {Object} req
  * @param {Object} res
@@ -1055,7 +1040,6 @@ export async function getOrder(req, res, next): Promise<void> {
   }
 }
 
-
 /**
  * @description admin/ add seller function
  * @description this function is for adding seller
@@ -1064,7 +1048,7 @@ export async function getOrder(req, res, next): Promise<void> {
  * @param {Object} next
  * @returns {Promise} returns a json message
  */
- export async function addSeller(req, res, next): Promise<void> {
+export async function addSeller(req, res, next): Promise<void> {
   // check validation result
   const errors = VR(req);
   if (errors.length > 0) {
@@ -1073,7 +1057,9 @@ export async function getOrder(req, res, next): Promise<void> {
 
   try {
     const sellerInfo: SellerType = req.body;
-    const foundSeller = await seller.findOne({ phoneNumer: sellerInfo.phoneNumber });
+    const foundSeller = await seller.findOne({
+      phoneNumer: sellerInfo.phoneNumber,
+    });
     if (foundSeller) {
       return res.json("email is already taken");
     }

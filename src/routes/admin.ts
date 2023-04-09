@@ -8,13 +8,16 @@ import {
   login,
   newPassword,
   isAuth,
-  Game,
+  createGame,
+  editGame,
   category,
   update,
   createUser,
   editUser,
   createSeller,
   editSeller,
+  createDiscount,
+  editDiscount,
 } from "../middlewares/validators/admin";
 import { signUp, comment } from "../middlewares/validators/user";
 
@@ -55,16 +58,15 @@ router.put(
 router.delete("/seller/delete/:id", isAuth, adminController.deleteUser);
 
 //add Game
-router.post("/Game/create", isAuth, Game, APFH, adminController.addGame);
+router.post("/Game/create", isAuth, createGame, APFH, adminController.addGame);
 //update Game
-router.put("/Game/update/:id", isAuth, APFH, adminController.updateGame);
+router.put("/Game/update/:id", isAuth, APFH , editGame, adminController.updateGame);
 //delete Game
 router.delete("/Game/delete/:id", isAuth, adminController.deleteGame);
 
 //comment
 router.post("/comment", isAuth, adminController.getComments);
 router.post("/comment/create", isAuth, comment, adminController.addComment);
-router.put("/comment/update/:id", isAuth, adminController.updateComment);
 router.delete("/comment/delete/:id", isAuth, adminController.deleteComment);
 
 //orders
@@ -88,6 +90,13 @@ router.put(
 router.delete("/category/delete/:id", isAuth, adminController.deleteCategory);
 
 //profile
-router.put("/profile/update/:id", isAuth, adminController.updateProfile);
+router.put("/profile/update", isAuth, ...update, adminController.updateProfile);
+
+
+//discount
+router.get("/discounts", isAuth, adminController.getDiscounts);
+router.post("/discount/create", isAuth, createDiscount, adminController.AddDiscount);
+router.put("/discount/update/:id", isAuth, editDiscount,adminController.UpdateDiscount);
+router.delete("/discount/delete/:id", isAuth, adminController.deleteDiscount);
 
 export default router;
