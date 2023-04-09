@@ -6,9 +6,9 @@ import Game from "../models/game";
 import Order from "../models/order";
 import Payment from "../models/payment";
 // import axios from "axios";
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
-import nodemailer from 'nodemailer';
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+import nodemailer from "nodemailer";
 import { UserInfo } from "os";
 
 interface UserType {
@@ -21,43 +21,21 @@ interface UserType {
 interface CommentType {
   text: string;
   title: string;
-  cons: string;
-  pros: string;
+  cons: string[];
+  pros: string[];
 }
-
 
 const transporter = nodemailer.createTransport({
   host: "smtp.mailtrap.io",
   port: 2525,
   auth: {
     user: "16dbd3d3135b2d",
-    pass: "6cea96dcb0c8d7"
-  }
+    pass: "6cea96dcb0c8d7",
+  },
 });
-export async function edit(req, res, next): Promise<void> {
-  const errors = VR(req);
-  if (errors.length > 0) {
-    return res.status(400).json({ msg: errors[0], success: false });
-  }
-  const {id} = req.params
-  const userInfo: UserType = req.body
-  try {
-      let seller: any = User.findById(id)
-      if (!seller) {
-          const error= new Error('Could not find seller')
-          next(error)
-      }
-      
-      const result = await User.findByIdAndUpdate(id,{ $set: userInfo })
-      res.status(201).json({message: 'seller updated!', sellerId: result._id})
-  } catch (err) {
-      err.statusCode || 500
-      next(err)
-  }
-}
 
 /**
- * @description user register function 
+ * @description user register function
  * @description register with jwt and token
  * @param {Object} req
  * @param {Object} res
@@ -65,7 +43,6 @@ export async function edit(req, res, next): Promise<void> {
  * @returns {Promise} returns a token and json message
  */
 export async function register(req, res, next): Promise<void> {
-
   // check validation result
   const errors = VR(req);
   if (errors.length > 0) {
@@ -73,38 +50,36 @@ export async function register(req, res, next): Promise<void> {
   }
 
   try {
-
     const userInfo: UserType = req.body;
-   
-    const user = await User.findOne({ email : userInfo.email });
+
+    const user = await User.findOne({ email: userInfo.email });
     if (user) {
-      return res.json("email is already taken")
+      return res.json("email is already taken");
     }
 
     userInfo.password = await bcrypt.hash(userInfo.password, 12);
-    
+
     //jwt
-    const token = await jwt.sign({userId: user._id }, process.env.USER_JWT , { expiresIn: "3d" })
+    const token = await jwt.sign({ userId: user._id }, process.env.USER_JWT, {
+      expiresIn: "3d",
+    });
     const newUser = await new User({
       ...userInfo,
-      token: token
-    })
+      token: token,
+    });
     await newUser.save();
 
     return res.json({
       message: newUser,
-    })
-
-
+    });
   } catch (error) {
     console.log(error);
-    next(error)
+    next(error);
   }
-
-};
+}
 
 /**
- * @description user login function 
+ * @description user login function
  * @description login with jwt and token
  * @param {Object} req
  * @param {Object} res
@@ -112,7 +87,6 @@ export async function register(req, res, next): Promise<void> {
  * @returns {Promise} returns a token and json message
  */
 export async function login(req, res, next): Promise<void> {
-
   // check validation result
   const errors = VR(req);
   if (errors.length > 0) {
@@ -120,35 +94,33 @@ export async function login(req, res, next): Promise<void> {
   }
 
   try {
-
     const email = req.body.email;
     const password = req.body.password;
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ email });
 
     if (!user) {
-      return res.json("Invalid email or password")
+      return res.json("Invalid email or password");
     }
 
-    const is_Match = await bcrypt.compare(password, user['password']);
-   
+    const is_Match = await bcrypt.compare(password, user["password"]);
+
     if (!is_Match) {
-      return res.json("Incorrect email or password")
+      return res.json("Incorrect email or password");
     }
 
-    const token = await jwt.sign({userId: user._id }, process.env.USER_JWT , { expiresIn: "3d" })
+    const token = await jwt.sign({ userId: user._id }, process.env.USER_JWT, {
+      expiresIn: "3d",
+    });
 
     return res.json({
-      message: 'Auth successful',
-      token: token
-    })
-
+      message: "Auth successful",
+      token: token,
+    });
   } catch (error) {
-    console.log(error)
-    next(error)
+    console.log(error);
+    next(error);
   }
-
-};
-
+}
 
 /**
  * @description user new password function
@@ -162,39 +134,47 @@ export async function newPassword(req, res, next) {
   // check validation result
   const errors = VR(req);
   if (errors.length > 0) {
-      return res.status(400).json({ msg: errors[0], success: false });
+    return res.status(400).json({ msg: errors[0], success: false });
   }
-  try{
+  try {
     const newPassword = req.body.password;
-    const user: any = await User.findOne({ $and : [{email : req.body.email , resetToken : req.body.token}] });
-    if(! user) {
-      return res.json('No account with that email found.')
+    const user: any = await User.findOne({
+      $and: [{ email: req.body.email, resetToken: req.body.token }],
+    });
+    if (!user) {
+      return res.json("No account with that email found.");
     }
-    if(user.resetToken == undefined){
-      return res.json('This link has already been used to change the password')
+    if (user.resetToken == undefined) {
+      return res.json("This link has already been used to change the password");
     }
-    await User.findOneAndUpdate({ email : req.body.email} , {$set : { password :  await bcrypt.hash(newPassword , 12) , resetToken : undefined , resetTokenExp : undefined} })
-   
-    return res.json({
-      message: 'Password edited successfully',
-    })
+    await User.findOneAndUpdate(
+      { email: req.body.email },
+      {
+        $set: {
+          password: await bcrypt.hash(newPassword, 12),
+          resetToken: undefined,
+          resetTokenExp: undefined,
+        },
+      }
+    );
 
-  } catch(err){
+    return res.json({
+      message: "Password edited successfully",
+    });
+  } catch (err) {
     console.log(err);
-    next(err)
+    next(err);
   }
- 
 }
 /**
- * @description get users function 
+ * @description get users function
  * @description list all users
  * @param {Object} req
  * @param {Object} res
  * @param {Object} next
- * @returns {Promise} returns array of users 
+ * @returns {Promise} returns array of users
  */
- export async function getUsers(req, res, next): Promise<void> {
-
+export async function getUsers(req, res, next): Promise<void> {
   // check validation result
   const errors = VR(req);
   if (errors.length > 0) {
@@ -202,22 +182,21 @@ export async function newPassword(req, res, next) {
   }
 
   try {
-
     const sort = req.body.sort;
     const skip = req.body.skip;
-    const users = await User.find({},{firstName:1,lastName:1,}).skip(skip).sort(sort)
+    const users = await User.find({}, { firstName: 1, lastName: 1 })
+      .skip(skip)
+      .sort(sort);
 
     return res.json({
-      message: 'Auth successful',
-      users
-    })
-
+      message: "Auth successful",
+      users,
+    });
   } catch (error) {
-    console.log(error)
-    next(error)
+    console.log(error);
+    next(error);
   }
-
-};
+}
 
 /**
  * @description user/ add comments function
@@ -227,21 +206,20 @@ export async function newPassword(req, res, next) {
  * @param {Object} next
  * @returns {Promise} returns a json message
  */
-export async function addComments(req, res, next): Promise<void> {
+export async function addComment(req, res, next): Promise<void> {
   const errors = VR(req);
   if (errors.length > 0) {
     return res.status(400).json({ msg: errors[0], success: false });
   }
-
+  const { userId } = res.auth;
   try {
-    const prodId = req.body.GameId;
-    const foundGame = await Game.findById(prodId);
-    if (!foundGame) {
-      return res.json("Game not found");
+    const foundComment = await Game.findById(req.params.id);
+    if (!foundComment) {
+      return res.json("Comment not found");
     }
     const commentInfo: CommentType = req.body;
     const comment = await new Comment({
-      userId: req.user,
+      userId,
       ...commentInfo,
     });
     await comment.save();
@@ -253,6 +231,38 @@ export async function addComments(req, res, next): Promise<void> {
   }
 }
 
+/**
+ * @description user/ delete comment function
+ * @description this is deleting comment function
+ * @param {Object} req
+ * @param {Object} res
+ * @param {Object} next
+ * @returns {Promise} returns a json message
+ */
+export async function deleteComment(req, res, next): Promise<void> {
+  const errors = VR(req);
+  if (errors.length > 0) {
+    return res.status(400).json({ msg: errors[0], success: false });
+  }
+  const { userId } = res.auth;
+  try {
+    const foundComment = await Game.findById(req.params.id);
+    if (!foundComment) {
+      return res.json("Comment not found");
+    }
+    if (foundComment.userId != userId.toString()) {
+      return res.json("this is not your comment");
+    }
+
+    await foundComment.delete();
+    return res.json({
+      message: foundComment,
+      result: "deleted successfully",
+    });
+  } catch (err) {
+    next(err);
+  }
+}
 /**
  * @description user/ cart function
  * @description this is the cart function that store the cart items in it
@@ -488,7 +498,6 @@ export async function UserInfos(req, res, next): Promise<void> {
   }
   try {
     if (mongoose.Types.ObjectId.isValid(req.params.id)) {
-      
       const UserInfo: UserType = req.body;
 
       const UserFounded = await User.findOne({ email: UserInfo.email });
@@ -518,9 +527,10 @@ export async function editUser(req, res, next): Promise<void> {
   if (errors.length > 0) {
     return res.status(400).json({ msg: errors[0], success: false });
   }
+  const { userId } = res.auth;
   try {
-    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
-      const foundUser = await User.findById(req.params.id);
+    if (mongoose.Types.ObjectId.isValid(userId)) {
+      const foundUser = await User.findById(userId);
       if (!foundUser) {
         return res.json({
           message: "User not found",

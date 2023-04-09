@@ -18,7 +18,7 @@ router.post("/login", ...login, userController.login);
 //register
 router.post("/register", ...signUp, userController.register);
 // edit user infos
-router.put("/edit/:id", isAuth, ...edit, userController.addComments);
+router.put("/edit", isAuth, ...edit, userController.editUser);
 //new password
 router.post("/new-password",isAuth, ...newPassword, userController.newPassword);
 
@@ -35,6 +35,7 @@ router.post("/order", isAuth, userController.createOrder);
 // router.get("/paycallback", userController.paycallback);
 
 //comment
-router.post("/comment/create", isAuth, comment, userController.addComments);
+router.post("/comment/create", isAuth, comment, userController.addComment);
+router.delete("/comment/delete/:id", isAuth, userController.deleteComment);
 
 export default router;
