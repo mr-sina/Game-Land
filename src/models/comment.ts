@@ -23,11 +23,7 @@ const Comment: mongoose.Schema = new mongoose.Schema({
     }],
     pros: [{
         type: String,
-    }],
-    check: {
-        type: Boolean,
-        default: false 
-    }
+    }]
 }, { 
     timestamps: true , toJSON: { virtuals: true }
 })
