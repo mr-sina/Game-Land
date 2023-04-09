@@ -36,7 +36,13 @@ export const register = [
   body("firstName", "please enter your first name correctly ").not().isEmpty(),
   body("lastName", "please enter your last name correctly ").not().isEmpty(),
 ];
-export const Game = [body("image", "please choose image").not().isEmpty()];
+export const Game = [
+  body('title', 'please choose title').not().isEmpty(),
+  body('price', 'please choose price').not().isEmpty(),
+  body('description', 'please choose description').optional(),
+  body('discount', 'please choose discount').optional(),
+  body('imageId', 'please choose imageId').optional()
+]
 
 export const smsAuth = [
   body("phoneNumber", "please enter your mobile number correctly")
@@ -79,6 +85,14 @@ export const newPassword = [
   body("email", "please enter email correctly ").isEmail(),
   body("password", "please enter password correctly ").isLength({ min: 4 }),
 ];
+
+/**
+ * @description seller/ isAuth function
+ * @description this function is for checking seller authorization
+ * @param {Object} req
+ * @param {Object} res
+ * @param {Object} next
+ */
 export function isAuth(req, res, next) {
   try {
     const authHeader = req.get("Authorization");
