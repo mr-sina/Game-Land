@@ -40,6 +40,19 @@ interface UserType {
   password: string;
   mobileNumber: string;
 }
+interface SellerType {
+  email: string;
+  password: string;
+  phoneNumber: string;
+  firstName: string;
+  lastName: string;
+  personalId: Number;
+  address: string;
+  city: string;
+  province: string;
+  shopName: string;
+  shabaNumber: Number;
+}
 
 interface GameType {
   title: string;
@@ -239,7 +252,7 @@ export async function addAdmin(req, res, next): Promise<void> {
     }
     //jwt
     const token = await jwt.sign(
-      { lastName: adminInfo.lastName, email: adminInfo.email },
+      { adminId: admin._id.toString() },
       process.env.ADMIN_JWT,
       { expiresIn: "3d" }
     );
@@ -353,7 +366,7 @@ export async function addUser(req, res, next): Promise<void> {
 
     //jwt
     const token = await jwt.sign(
-      { email: userInfo.email },
+      { userId: user._id.toString() },
       process.env.USER_JWT,
       { expiresIn: "3d" }
     );
@@ -1035,6 +1048,121 @@ export async function getOrder(req, res, next): Promise<void> {
     } else {
       return res.json({
         message: "invalid id",
+      });
+    }
+  } catch (err) {
+    next(err);
+  }
+}
+
+
+/**
+ * @description admin/ add seller function
+ * @description this function is for adding seller
+ * @param {Object} req
+ * @param {Object} res
+ * @param {Object} next
+ * @returns {Promise} returns a json message
+ */
+ export async function addSeller(req, res, next): Promise<void> {
+  // check validation result
+  const errors = VR(req);
+  if (errors.length > 0) {
+    return res.status(400).json({ msg: errors[0], success: false });
+  }
+
+  try {
+    const sellerInfo: SellerType = req.body;
+    const foundSeller = await seller.findOne({ phoneNumer: sellerInfo.phoneNumber });
+    if (foundSeller) {
+      return res.json("email is already taken");
+    }
+    sellerInfo.password = await bcrypt.hash(sellerInfo.password, 12);
+
+    //jwt
+    const token = await jwt.sign(
+      { userId: foundSeller._id.toString() },
+      process.env.USER_JWT,
+      { expiresIn: "3d" }
+    );
+    const newUser = await new User({
+      ...sellerInfo,
+      token: token,
+    });
+    await newUser.save();
+
+    return res.json({
+      message: newUser,
+    });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
+}
+
+/**
+ * @description seller/ update user function
+ * @description this function is for updating seller
+ * @param {Object} req
+ * @param {Object} res
+ * @param {Object} next
+ * @returns {Promise} returns a json message
+ */
+export async function updateSeller(req, res, next): Promise<void> {
+  const errors = VR(req);
+  if (errors.length > 0) {
+    return res.status(400).json({ msg: errors[0], success: false });
+  }
+  try {
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      const foundSeller = await seller.findById(req.params.id);
+      if (!foundSeller) {
+        return res.json({
+          message: "seller not found",
+        });
+      }
+      const updateSeller = await seller.findOneAndUpdate(
+        { _id: req.params.id },
+        { $set: req.body }
+      );
+      return res.json({
+        message: "seller user successfuly",
+        updateSeller,
+      });
+    } else {
+      return res.json({
+        message: "seller not fount with this id.",
+      });
+    }
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * @description seller/ delete user function
+ * @description this function is for deleting seller
+ * @param {Object} req
+ * @param {Object} res
+ * @param {Object} next
+ * @returns {Promise} returns a json message
+ */
+export async function deleteSeller(req, res, next): Promise<void> {
+  try {
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      const foundSeller = await seller.findById(req.params.id);
+      if (!foundSeller) {
+        return res.json({
+          message: "seller not found",
+        });
+      }
+      await seller.deleteOne({ _id: req.params.id });
+      return res.json({
+        message: "seller user successfuly",
+      });
+    } else {
+      return res.json({
+        message: "seller not fount with this id.",
       });
     }
   } catch (err) {

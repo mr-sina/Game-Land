@@ -11,6 +11,10 @@ import {
   Game,
   category,
   update,
+  createUser,
+  editUser,
+  createSeller,
+  editSeller,
 } from "../middlewares/validators/admin";
 import { signUp, comment } from "../middlewares/validators/user";
 
@@ -25,7 +29,6 @@ router.post("/register", ...register, adminController.register);
 //forgot password
 router.post("/new-password", ...newPassword, adminController.newPassword);
 
-
 //add admin
 router.post("/create", isAuth, ...register, adminController.addAdmin);
 //update admin
@@ -33,20 +36,26 @@ router.put("/update/:id", isAuth, ...update, adminController.updateAdmin);
 //delete admin
 router.delete("/delete/:id", isAuth, adminController.deleteAdmin);
 //add user
-router.post("/user/create", isAuth, ...signUp, adminController.addUser);
+router.post("/user/create", isAuth, ...createUser, adminController.addUser);
 //update user
-router.put("/user/update/:id", isAuth, ...signUp, adminController.updateUser);
+router.put("/user/update/:id", isAuth, ...editUser, adminController.updateUser);
 //delete user
 router.delete("/user/delete/:id", isAuth, adminController.deleteUser);
 
-//add Game
-router.post(
-  "/Game/create",
+//add user
+router.post("/seller/create", isAuth, ...createSeller, adminController.addUser);
+//update user
+router.put(
+  "/seller/update/:id",
   isAuth,
-  Game,
-  APFH,
-  adminController.addGame
+  ...editSeller,
+  adminController.updateUser
 );
+//delete user
+router.delete("/seller/delete/:id", isAuth, adminController.deleteUser);
+
+//add Game
+router.post("/Game/create", isAuth, Game, APFH, adminController.addGame);
 //update Game
 router.put("/Game/update/:id", isAuth, APFH, adminController.updateGame);
 //delete Game

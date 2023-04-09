@@ -10,13 +10,69 @@ export const register = [
   body('role','please enter your role').not().isEmpty()
 ]
 export const update = [
-  body('firstName', 'please enter your first name correctly '),
-  body('lastName', 'please enter your last name correctly '),
-  body('email', 'please enter email correctly ').isEmail(),
-  body('password', 'please length must be at least 5 ').isLength({ min: 5 }),
+  body('firstName', 'please enter your first name correctly ').optional(),
+  body('lastName', 'please enter your last name correctly ').optional(),
+  body('email', 'please enter email correctly ').isEmail().optional(),
+  body('password', 'please length must be at least 5 ').isLength({ min: 5 }).optional(),
   body('role','please enter your role')
 ]
-
+export const createUser = [
+  body("email", "please enter email correctly ").optional(),
+  body("password", "please enter password correctly ").optional().isLength({ min: 5 }),
+  body("firstName", "please enter firstName correctly ").optional(),
+  body("lastName", "please enter lastName correctly ").optional(),
+  
+];
+export const editUser = [
+  body("email", "please enter email correctly ").not().isEmpty(),
+  body("password", "please enter password correctly ").not().isEmpty().isLength({ min: 5 }),
+  body("firstName", "please enter firstName correctly ").not().isEmpty(),
+  body("lastName", "please enter lastName correctly ").not().isEmpty(),
+];
+export const createSeller = [
+  body("email", "please enter email correctly ").not().isEmpty(),
+  body("password", "please enter password correctly ").not().isEmpty().isLength({ min: 5 }),
+  body("phoneNumber", "please enter phoneNumber correctly ").not().isEmpty().isEmpty()
+    .isLength({ max: 11 })
+    .custom(async (mobileNumber) => {
+      if (mobileNumber.slice(0, 2) !== "09") {
+        return Promise.reject("please enter your mobile number correctly");
+      }
+    }),
+  body("firstName", "please enter firstName correctly ").not().isEmpty(),
+  body("lastName", "please enter lastName correctly ").not().isEmpty(),
+  body("personalId", "please enter personalId correctly ").not().isEmpty().isLength({ min: 9 }),
+  body("address", "please enter address correctly ").optional().isLength({min:2, max: 30 }),
+  body("city", "please enter city correctly ").optional().isLength({ min: 3 }),
+  body("province", "please enter province correctly ").optional().isLength({ min: 1 }),
+  body("shopName", "please enter shopName correctly ").optional(),
+  body("shabaNumber", "please enter shabaNumber correctly ").optional().isLength({
+    min: 24,
+    max: 26,
+  }),
+];
+export const editSeller = [
+  body("email", "please enter email correctly ").optional(),
+  body("password", "please enter password correctly ").optional().isLength({ min: 5 }),
+  body("phoneNumber", "please enter phoneNumber correctly ").optional().isEmpty()
+    .isLength({ max: 11 })
+    .custom(async (mobileNumber) => {
+      if (mobileNumber.slice(0, 2) !== "09") {
+        return Promise.reject("please enter your mobile number correctly");
+      }
+    }),
+  body("firstName", "please enter firstName correctly ").optional(),
+  body("lastName", "please enter lastName correctly ").optional(),
+  body("personalId", "please enter personalId correctly ").optional().isLength({ min: 9 }),
+  body("address", "please enter address correctly ").optional().isLength({min:2, max: 30 }),
+  body("city", "please enter city correctly ").optional().isLength({ min: 3 }),
+  body("province", "please enter province correctly ").optional().isLength({ min: 1 }),
+  body("shopName", "please enter shopName correctly ").optional(),
+  body("shabaNumber", "please enter shabaNumber correctly ").optional().isLength({
+    min: 24,
+    max: 26,
+  }),
+];
 export const login = [
   body('email', 'please enter email correctly ').isEmail(),
   body('password', 'please enter password correctly ').isLength({ min: 5 })
@@ -34,7 +90,12 @@ export const newPassword = [
 
 
 export const Game = [
-  // body('image', 'please choose image').not().isEmpty()
+  body('seller', 'please choose seller').not().isEmpty(),
+  body('title', 'please choose title').not().isEmpty(),
+  body('price', 'please choose price').not().isEmpty(),
+  body('description', 'please choose description').optional(),
+  body('discount', 'please choose discount').optional(),
+  body('imageId', 'please choose imageId').optional()
 ]
 
 export const category = [
