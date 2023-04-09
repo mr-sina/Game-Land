@@ -103,6 +103,7 @@ export function isAuth(req, res, next) {
         console.log(err);
         return res.status(401).send("not authorized");
       }
+      res.auth=decodedToken
       next();
     });
   } catch (error) {

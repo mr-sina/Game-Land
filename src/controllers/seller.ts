@@ -25,16 +25,6 @@ interface GameSellerType {
   warehouse: Boolean;
   colors: string[];
 }
-
-/**
- * @description seller/ add  function
- * @description this function is for adding GameSeller
- * @param {Object} req
- * @param {Object} res
- * @param {Object} next
- * @returns {Promise} returns a json message
- */
-
 interface SellerInterface {
   email: string;
   password: string;
@@ -54,6 +44,14 @@ interface Auth {
   password?: string;
 }
 
+/**
+ * @description seller/ register seller function
+ * @description this function is for register
+ * @param {Object} req
+ * @param {Object} res
+ * @param {Object} next
+ * @returns {Promise} returns a json message
+ */
 export async function signUp(req, res, next): Promise<void> {
   // check validation result
   const errors = VR(req);
@@ -93,6 +91,14 @@ export async function signUp(req, res, next): Promise<void> {
   }
 }
 
+/**
+ * @description seller/ login seller function
+ * @description this function is for login
+ * @param {Object} req
+ * @param {Object} res
+ * @param {Object} next
+ * @returns {Promise} returns a json message
+ */
 export async function login(
   { body }: { body: Auth },
   req,
@@ -151,22 +157,32 @@ export async function newPassword(req, res, next) {
   }
 }
 
+/**
+ * @description seller/ edit seller function
+ * @description this function is for edit seller
+ * @param {Object} req
+ * @param {Object} res
+ * @param {Object} next
+ * @returns {Promise} returns a json message
+ */
 export async function edit(req, res, next): Promise<void> {
   const errors = VR(req);
   if (errors.length > 0) {
     return res.status(400).json({ msg: errors[0], success: false });
   }
-  const { id } = req.params;
+  const { sellerId } = res.auth;
   const sellerInfo: SellerInterface = req.body;
   try {
-    let seller: any = Seller.findById(id);
+    let seller: any = Seller.findById(sellerId);
     if (!seller) {
       const error: JsError = new Error("Could not find seller");
       error.statusCode = 404;
       next(error);
     }
 
-    const result = await Seller.findByIdAndUpdate(id, { $set: sellerInfo });
+    const result = await Seller.findByIdAndUpdate(sellerId, {
+      $set: sellerInfo,
+    });
     res.status(201).json({ message: "seller updated!", sellerId: result._id });
   } catch (err) {
     err.statusCode || 500;
@@ -174,11 +190,20 @@ export async function edit(req, res, next): Promise<void> {
   }
 }
 
+/**
+ * @description seller/ create game of seller function
+ * @description this function is for creating game
+ * @param {Object} req
+ * @param {Object} res
+ * @param {Object} next
+ * @returns {Promise} returns a json message
+ */
 export async function createGameSeller(req, res, next) {
   const errors = VR(req);
   if (errors.length > 0) {
     return res.status(400).json({ msg: errors[0], success: false });
   }
+  const { sellerId } = res.auth;
   try {
     //console.log(req.body);
     //console.log(req.files);
@@ -195,12 +220,11 @@ export async function createGameSeller(req, res, next) {
       }).save();
       imageId.push(new mongoose.Types.ObjectId());
     }
-
     const GameInfo: GameSellerType = req.body;
     const newGame = await new Seller({
       imageId: imageId,
       ...GameInfo,
-      sellerId: req.sellerId,
+      sellerId,
     });
     await newGame.save();
 
@@ -213,20 +237,26 @@ export async function createGameSeller(req, res, next) {
 }
 
 /**
- * @description s/ add admin function
- * @description this function is for adding admin
+ * @description seller/ update game of seller function
+ * @description this function is for updating game
  * @param {Object} req
  * @param {Object} res
  * @param {Object} next
  * @returns {Promise} returns a json message
  */
 export async function updateGameSeller(req, res, next) {
+  const { sellerId } = res.auth;
   try {
     if (mongoose.Types.ObjectId.isValid(req.params.id)) {
       const foundGame = await Seller.findById(req.params.id);
       if (!foundGame) {
         return res.json({
           message: "Game not found",
+        });
+      }
+      if (foundGame.seller != sellerId.toString()) {
+        return res.json({
+          message: "you are not owner of this game",
         });
       }
       const updateProSeller: GameSellerType = req.body;
@@ -249,8 +279,8 @@ export async function updateGameSeller(req, res, next) {
 }
 
 /**
- * @description admin/ add admin function
- * @description this function is for adding admin
+ * @description seller/ remove Game of seller function
+ * @description this function is for removing game
  * @param {Object} req
  * @param {Object} res
  * @param {Object} next
@@ -258,12 +288,18 @@ export async function updateGameSeller(req, res, next) {
  */
 
 export async function removeGameSeller(req, res, next) {
+  const { sellerId } = res.auth;
   try {
     if (mongoose.Types.ObjectId.isValid(req.params.id)) {
       const foundGame = await Seller.findById(req.params.id);
       if (!foundGame) {
         return res.json({
           message: "Game not found",
+        });
+      }
+      if (foundGame.seller != sellerId.toString()) {
+        return res.json({
+          message: "you are not owner of this game",
         });
       }
       await Seller.deleteOne({ _id: req.params.id });
