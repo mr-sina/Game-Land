@@ -186,51 +186,6 @@ export async function login(req, res, next): Promise<void> {
 }
 
 /**
- * @description admin new password function
- * @description this function is for setting new password
- * @param {Object} req
- * @param {Object} res
- * @param {Object} next
- * @returns {Promise} returns a json message
- */
-export async function newPassword(req, res, next) {
-  // check validation result
-  const errors = VR(req);
-  if (errors.length > 0) {
-    return res.status(400).json({ msg: errors[0], success: false });
-  }
-  try {
-    const newPassword = req.body.password;
-    const admin: any = await Admin.findOne({
-      $and: [{ email: req.body.email, resetToken: req.body.token }],
-    });
-    if (!admin) {
-      return res.json("No account with that email found.");
-    }
-    if (admin.resetToken == undefined) {
-      return res.json("This link has already been used to change the password");
-    }
-    await Admin.findOneAndUpdate(
-      { email: req.body.email },
-      {
-        $set: {
-          password: await bcrypt.hash(newPassword, 12),
-          resetToken: undefined,
-          resetTokenExp: undefined,
-        },
-      }
-    );
-
-    return res.json({
-      message: "Password edited successfully",
-    });
-  } catch (err) {
-    console.log(err);
-    next(err);
-  }
-}
-
-/**
  * @description admin/ add admin function
  * @description this function is for adding admin
  * @param {Object} req

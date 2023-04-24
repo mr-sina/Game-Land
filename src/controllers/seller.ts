@@ -138,25 +138,6 @@ export async function login(
   }
 }
 
-export async function newPassword(req, res, next) {
-  const { newPassword, sellerId, token } = req.body;
-  try {
-    const resetSeller: any = await Seller.findOne({
-      resetToken: token,
-      resetTokenExpiration: { $gt: Date.now() },
-      _id: sellerId,
-    });
-    resetSeller.password = await bcrypt.hash(newPassword, 12);
-    resetSeller.resetToken = undefined;
-    resetSeller.resetTokenExp = undefined;
-    await resetSeller.save();
-  } catch (err) {
-    const error: JsError = new Error(err);
-    error.statusCode = 500;
-    return next(error);
-  }
-}
-
 /**
  * @description seller/ edit seller function
  * @description this function is for edit seller
