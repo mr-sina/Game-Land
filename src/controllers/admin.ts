@@ -14,18 +14,6 @@ import seller from "../models/seller";
 import Image from "../models/image";
 import fs from "fs-extra";
 
-/**
- * this is for sending email
- */
-const transporter = nodemailer.createTransport({
-  host: "smtp.mailtrap.io",
-  port: 2525,
-  auth: {
-    user: "16dbd3d3135b2d",
-    pass: "6cea96dcb0c8d7",
-  },
-});
-
 interface AdminType {
   firstName: string;
   lastName: string;
