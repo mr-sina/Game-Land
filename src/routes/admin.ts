@@ -29,8 +29,6 @@ import ACFH from "../middlewares/multer/ACFH";
 router.post("/login", ...login, adminController.login);
 //register
 router.post("/register", ...register, adminController.register);
-//forgot password
-router.post("/new-password", ...newPassword, adminController.newPassword);
 
 //add admin
 router.post("/create", isAuth, ...register, adminController.addAdmin);

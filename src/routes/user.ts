@@ -19,8 +19,6 @@ router.post("/login", ...login, userController.login);
 router.post("/register", ...signUp, userController.register);
 // edit user infos
 router.put("/edit", isAuth, ...edit, userController.editUser);
-//new password
-router.post("/new-password",isAuth, ...newPassword, userController.newPassword);
 
 //cart
 router.post("/cart", isAuth, userController.cart);

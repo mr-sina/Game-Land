@@ -22,8 +22,6 @@ router.post("/login", ...login, sellerController.login);
 //edit seller info
 router.put("/edit",isAuth, ...edit, sellerController.edit);
 
-router.post("/new-password", sellerController.newPassword);
-
 
 //add game
 router.post(
