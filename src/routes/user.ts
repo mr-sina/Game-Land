@@ -11,8 +11,6 @@ import {
   isAuth,
   comment,
 } from "../middlewares/validators/user";
-//get All
-router.get("/get-users", userController.getUsers);
 //login
 router.post("/login", ...login, userController.login);
 //register

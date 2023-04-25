@@ -940,23 +940,11 @@ export async function deleteDiscount(req, res, next): Promise<void> {
  * @returns {Promise} returns a json message
  */
 export async function getOrders(req, res, next): Promise<void> {
+  
+    const { limit, skip, sort } = req.body;
   try {
-    const allOreders = await Order.find(
-      {},
-      {
-        limit: 15,
-        sort: { createAt: -1 },
-        populate: [
-          {
-            path: "userId",
-            select: "lastName",
-          },
-          {
-            path: "item",
-          },
-        ],
-      }
-    );
+    const allOreders = await Order.find().limit(limit).skip(skip).sort(sort);
+
 
     return res.json({
       message: allOreders,

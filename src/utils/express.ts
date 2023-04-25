@@ -2,6 +2,7 @@ import express from 'express'
 import adminRoutes from '../routes/admin'
 import userRoutes from '../routes/user'
 import sellerRoutes from '../routes/seller'
+import generalRoutes from '../routes/general'
 
 const app = express()
 import  './db'
@@ -9,6 +10,7 @@ app.use(express.urlencoded({ extended: false }))
 app.use(express.json())
 
 // Routes
+app.use('/general', generalRoutes);
 app.use('/admin', adminRoutes);
 app.use('/user', userRoutes);
 app.use('/seller' , sellerRoutes)

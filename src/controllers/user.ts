@@ -114,38 +114,6 @@ export async function login(req, res, next): Promise<void> {
 }
 
 /**
- * @description get users function
- * @description list all users
- * @param {Object} req
- * @param {Object} res
- * @param {Object} next
- * @returns {Promise} returns array of users
- */
-export async function getUsers(req, res, next): Promise<void> {
-  // check validation result
-  const errors = VR(req);
-  if (errors.length > 0) {
-    return res.status(400).json({ msg: errors[0], success: false });
-  }
-
-  try {
-    const sort = req.body.sort;
-    const skip = req.body.skip;
-    const users = await User.find({}, { firstName: 1, lastName: 1 })
-      .skip(skip)
-      .sort(sort);
-
-    return res.json({
-      message: "Auth successful",
-      users,
-    });
-  } catch (error) {
-    console.log(error);
-    next(error);
-  }
-}
-
-/**
  * @description user/ add comments function
  * @description this function is for adding comments
  * @param {Object} req
