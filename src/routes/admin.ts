@@ -88,7 +88,7 @@ router.put(
 router.delete("/category/delete/:id", isAuth, adminController.deleteCategory);
 
 //profile
-router.put("/profile/update", isAuth, ...update, adminController.updateProfile);
+router.post("/profile/update", isAuth, ...update, adminController.updateProfile);
 
 
 //discount

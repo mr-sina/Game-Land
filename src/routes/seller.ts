@@ -2,7 +2,6 @@ import express from "express";
 const router = express.Router();
 
 import * as sellerController from "../controllers/seller";
-
 import {
   register,
   login,
@@ -17,15 +16,12 @@ import APFH from "../middlewares/multer/APFH";
 router.post("/register", ...register, sellerController.signUp);
 //login
 router.post("/login", ...login, sellerController.login);
-
-
 //edit seller info
 router.put("/edit",isAuth, ...edit, sellerController.edit);
 
-
 //add game
 router.post(
-  "/game/creatgameseller",
+  "/game/creategameseller",
   isAuth,
   ...Game,
   APFH,

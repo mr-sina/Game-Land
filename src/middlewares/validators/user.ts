@@ -54,7 +54,6 @@ export const answer = [
  */
 export function isAuth(req, res, next){
   const authHeader = req.get('Authorization')
-  console.log(authHeader)
   jwt.verify(authHeader, process.env.USER_JWT, (err, decodedToken) => {
     console.log(decodedToken)
     if (err || !decodedToken) {

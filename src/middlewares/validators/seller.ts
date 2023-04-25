@@ -56,7 +56,13 @@ export const smsAuth = [
 ];
 export const reset = [body("email", "please enter email correctly ").isEmail()];
 export const login = [
-  body("email", "please enter email correctly ").isEmail(),
+  body("phoneNumber", "please enter phoneNumber correctly ").optional().isEmpty()
+    .isLength({ max: 11 })
+    .custom(async (mobileNumber) => {
+      if (mobileNumber.slice(0, 2) !== "09") {
+        return Promise.reject("please enter your mobile number correctly");
+      }
+    }),
   body("password", "please enter password correctly ").isLength({ min: 5 }),
 ];
 export const edit = [
@@ -96,7 +102,6 @@ export const newPassword = [
 export function isAuth(req, res, next) {
   try {
     const authHeader = req.get("Authorization");
-    console.log(authHeader);
     jwt.verify(authHeader, process.env.ADMIN_JWT, (err, decodedToken) => {
       console.log(decodedToken);
       if (err || !decodedToken) {

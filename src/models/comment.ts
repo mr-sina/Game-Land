@@ -2,9 +2,9 @@ import mongoose from "mongoose"
 import mongoosePaginate from 'mongoose-paginate';
 
 const Comment: mongoose.Schema = new mongoose.Schema({
-    productId: {
+    gameId: {
         type: mongoose.Types.ObjectId,
-        ref: 'Product',
+        ref: 'Game',
     },
     userId: {
         type: mongoose.Types.ObjectId,

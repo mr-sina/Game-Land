@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
 
   // File Destination
   destination(req, file, cb) {
-    const uploadPath = path.join("uploads", "products");
+    const uploadPath = path.join("uploads");
 
     if (!fs.existsSync(uploadPath)) {
       // if uploda directory not exists, will be create
@@ -54,13 +54,13 @@ const upload = multer({
 
 
 /**
- * @description Add Product File Handler
+ * @description Add Game File Handler
  */
 export default (req, res, next) => {
   upload(req, res, (err) => {
     if (err) {
 
-      if (err === "Type Error. Alowed types: png, jpg, jpeg")
+      if (err === "Type Error. Allowed types: png, jpg, jpeg")
         return res.status(400).send({ msg: err, success: false });
 
       if (err.message)

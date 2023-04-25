@@ -8,7 +8,7 @@ function fileFilter(req, file, cb) {
   const allowed = ["image/png", "image/jpg", "image/jpeg"];
 
   if (!allowed.includes(file.mimetype)) {
-    return cb("Type Error. Alowed types: png, jpg, jpeg", false);
+    return cb("Type Error. Allowed types: png, jpg, jpeg", false);
 
   } else {
     return cb(undefined, true);
@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
 
   // File Destination
   destination(req, file, cb) {
-    const uploadPath = path.join("uploads", "categories");
+    const uploadPath = path.join("uploads");
 
     if (!fs.existsSync(uploadPath)) {
       // if uploda directory not exists, will be create
@@ -54,7 +54,7 @@ const upload = multer({
 
 
 /**
- * @description Add Product File Handler
+ * @description Add Game File Handler
  */
 export default (req, res, next) => {
   upload(req, res, (err) => {

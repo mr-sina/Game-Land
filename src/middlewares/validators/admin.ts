@@ -142,7 +142,6 @@ export function isAuth(req, res, next) {
   try {
 
     const authHeader = req.get('Authorization');
-    console.log(authHeader)
     jwt.verify(authHeader, process.env.ADMIN_JWT, (err, decodedToken) => {
       console.log(decodedToken)
       if (err || !decodedToken) {

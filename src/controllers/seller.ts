@@ -16,15 +16,6 @@ interface GameInterface {
   discount: mongoose.Types.ObjectId;
   seller: mongoose.Types.ObjectId;
 }
-interface GameSellerType {
-  sellerId: mongoose.Types.ObjectId;
-  GameId: mongoose.Types.ObjectId;
-  price: Number;
-  quantity: Number;
-  guarantee: String;
-  warehouse: Boolean;
-  colors: string[];
-}
 interface SellerInterface {
   email: string;
   password: string;
@@ -99,13 +90,8 @@ export async function signUp(req, res, next): Promise<void> {
  * @param {Object} next
  * @returns {Promise} returns a json message
  */
-export async function login(
-  { body }: { body: Auth },
-  req,
-  res,
-  next
-): Promise<void> {
-  const { phoneNumber, password } = body;
+export async function login(req, res, next): Promise<void> {
+  const { phoneNumber, password } = req.body;
   try {
     let seller: any = await Seller.findOne({ phoneNumber });
     if (!seller) {
@@ -114,9 +100,6 @@ export async function login(
       );
       error.statusCode = 401;
       next(error);
-    }
-    if (req.body.remember) {
-      seller.setRememberToken(res);
     }
     const match = await bcrypt.compare(password, seller.password);
     if (!match) {
@@ -185,27 +168,26 @@ export async function createGameSeller(req, res, next) {
     return res.status(400).json({ msg: errors[0], success: false });
   }
   const { sellerId } = res.auth;
-  try {
-    //console.log(req.body);
-    //console.log(req.files);
-    //console.log(req.files.image[0].filename)
-    const imageArr: any = [];
-    imageArr.push(req.files.image);
-    let imageId: any = [];
 
-    for (let i = 0; i < imageArr[0].length; i++) {
-      await new Image({
-        url: req.files.image[i].filename,
-        alt: req.body.alt,
-        meta: req.body.meta,
-      }).save();
-      imageId.push(new mongoose.Types.ObjectId());
+  const imageArr: any = [];
+  let imageId: any = [];
+  try {
+    if (req.files) {
+      imageArr.push(req.files.image);
+      for (let i = 0; i < imageArr[0].length; i++) {
+        await new Image({
+          url: req.files.image[i].filename,
+          alt: req.body.alt,
+          meta: req.body.meta,
+        }).save();
+        imageId.push(new mongoose.Types.ObjectId());
+      }
     }
-    const GameInfo: GameSellerType = req.body;
-    const newGame = await new Seller({
+    const GameInfo: GameInterface = req.body;
+    const newGame = await new Game({
       imageId: imageId,
       ...GameInfo,
-      sellerId,
+      seller: sellerId,
     });
     await newGame.save();
 
@@ -227,9 +209,23 @@ export async function createGameSeller(req, res, next) {
  */
 export async function updateGameSeller(req, res, next) {
   const { sellerId } = res.auth;
+
+  const imageArr: any = [];
+  let imageId: any = [];
   try {
+    if (req.files) {
+      imageArr.push(req.files.image);
+      for (let i = 0; i < imageArr[0].length; i++) {
+        await new Image({
+          url: req.files.image[i].filename,
+          alt: req.body.alt,
+          meta: req.body.meta,
+        }).save();
+        imageId.push(new mongoose.Types.ObjectId());
+      }
+    }
     if (mongoose.Types.ObjectId.isValid(req.params.id)) {
-      const foundGame = await Seller.findById(req.params.id);
+      const foundGame = await Game.findById(req.params.id);
       if (!foundGame) {
         return res.json({
           message: "Game not found",
@@ -240,10 +236,11 @@ export async function updateGameSeller(req, res, next) {
           message: "you are not owner of this game",
         });
       }
-      const updateProSeller: GameSellerType = req.body;
-      const updateGame = await Seller.findOneAndUpdate(
-        { _id: req.params.id },
-        { $set: updateProSeller }
+      const updateGameSeller: GameInterface = req.body;
+      updateGameSeller.imageId=imageId
+      const updateGame = await Game.findOneAndUpdate(
+        { _id: foundGame._id },
+        { $set: updateGameSeller}
       );
       return res.json({
         message: "update Game successfuly",
@@ -272,7 +269,7 @@ export async function removeGameSeller(req, res, next) {
   const { sellerId } = res.auth;
   try {
     if (mongoose.Types.ObjectId.isValid(req.params.id)) {
-      const foundGame = await Seller.findById(req.params.id);
+      const foundGame = await Game.findById(req.params.id);
       if (!foundGame) {
         return res.json({
           message: "Game not found",
@@ -283,7 +280,7 @@ export async function removeGameSeller(req, res, next) {
           message: "you are not owner of this game",
         });
       }
-      await Seller.deleteOne({ _id: req.params.id });
+      await Game.deleteOne({ _id: req.params.id });
       return res.json({
         message: "delete Game successfuly",
       });

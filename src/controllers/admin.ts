@@ -43,14 +43,16 @@ interface SellerType {
 }
 
 interface GameType {
+  imageId: string[];
   title: string;
+  price: number;
   description: string;
   discount: mongoose.Types.ObjectId;
   seller: mongoose.Types.ObjectId;
 }
 
 interface CommentType {
-  productId: mongoose.Types.ObjectId;
+  gameId: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   text: string;
   title: string;
@@ -424,21 +426,19 @@ export async function addGame(req, res, next): Promise<void> {
   if (errors.length > 0) {
     return res.status(400).json({ msg: errors[0], success: false });
   }
+  const imageArr: any = [];
+  let imageId: any = [];
   try {
-    //console.log(req.body);
-    //console.log(req.files);
-    //console.log(req.files.image[0].filename)
-    let imageArr: any = [];
-    imageArr.push(req.files.image);
-    let imageId: any = [];
-
-    for (let i = 0; i < imageArr[0].length; i++) {
-      await new Image({
-        url: req.files.image[i].filename,
-        alt: req.body.alt,
-        meta: req.body.meta,
-      }).save();
-      imageId.push(new mongoose.Types.ObjectId());
+    if (req.files) {
+      imageArr.push(req.files.image);
+      for (let i = 0; i < imageArr[0].length; i++) {
+        await new Image({
+          url: req.files.image[i].filename,
+          alt: req.body.alt,
+          meta: req.body.meta,
+        }).save();
+        imageId.push(new mongoose.Types.ObjectId());
+      }
     }
 
     const GameInfo: GameType = req.body;
@@ -466,7 +466,19 @@ export async function addGame(req, res, next): Promise<void> {
  */
 export async function updateGame(req, res, next): Promise<void> {
   let imageArr = [];
+  let imageId: any = [];
   try {
+    if (req.files) {
+      imageArr.push(req.files.image);
+      for (let i = 0; i < imageArr[0].length; i++) {
+        await new Image({
+          url: req.files.image[i].filename,
+          alt: req.body.alt,
+          meta: req.body.meta,
+        }).save();
+        imageId.push(new mongoose.Types.ObjectId());
+      }
+    }
     if (mongoose.Types.ObjectId.isValid(req.params.id)) {
       const foundGame = await Game.findById(req.params.id);
       if (!foundGame) {
@@ -474,38 +486,38 @@ export async function updateGame(req, res, next): Promise<void> {
           message: "Game not found",
         });
       }
-      try {
-        var found = Image.find(function (element) {
-          // return element > 4;
-        });
-        const file = await fs.ensureFile("/Game/update/" + req.body.image);
-        if (!file) {
-          return res.json({
-            message: "image not found",
-          });
-        }
-        await fs.remove("/Game/update/" + req.body.image);
-        //   imageArr.push( mongoose.Types.ObjectId())
-        res.json({ message: "remove image successful" });
-      } catch (err) {
-        res.json({ message: "remove image failed" });
-      }
-      // imageArr.push(req.files.image)
-      // imageArr.push(new mongoose.Types.ObjectId())
-      const imageUpdateType: imageType = req.body.Image;
-      const updateImage = await Image.findOneAndUpdate(
-        { _id: req.params.id },
-        { $set: imageUpdateType }
-      );
-
+      // try {
+      //   var found = Image.find(function (element) {
+      //     // return element > 4;
+      //   });
+      //   const file = await fs.ensureFile("/Game/update/" + req.body.image);
+      //   if (!file) {
+      //     return res.json({
+      //       message: "image not found",
+      //     });
+      //   }
+      //   await fs.remove("/Game/update/" + req.body.image);
+      //   //   imageArr.push( mongoose.Types.ObjectId())
+      //   res.json({ message: "remove image successful" });
+      // } catch (err) {
+      //   res.json({ message: "remove image failed" });
+      // }
+      // // imageArr.push(req.files.image)
+      // // imageArr.push(new mongoose.Types.ObjectId())
+      // const imageUpdateType: imageType = req.body.Image;
+      // const updateImage = await Image.findOneAndUpdate(
+      //   { _id: req.params.id },
+      //   { $set: imageUpdateType }
+      // );
+      const gameInfo: GameType = req.body;
+      gameInfo.imageId=imageId
       const updateGame = await Game.findOneAndUpdate(
         { _id: req.params.id },
-        { $set: req.body }
+        { $set: gameInfo}
       );
       return res.json({
         message: "update Game successfuly",
-        updateImage,
-        updateGame,
+        gameInfo
       });
     } else {
       return res.json({
