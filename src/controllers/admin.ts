@@ -13,6 +13,7 @@ import VR from "../middlewares/validators/validationResult";
 import seller from "../models/seller";
 import Image from "../models/image";
 import fs from "fs-extra";
+import category from "../models/category";
 
 interface AdminType {
   firstName: string;
@@ -49,6 +50,7 @@ interface GameType {
   description: string;
   discount: mongoose.Types.ObjectId;
   seller: mongoose.Types.ObjectId;
+  category: mongoose.Types.ObjectId;
 }
 
 interface CommentType {
@@ -198,7 +200,10 @@ export async function addAdmin(req, res, next): Promise<void> {
     }
 
     adminInfo.password = await bcrypt.hash(adminInfo.password, 12);
-    if (req.body.role !== "paymentManager") {
+    if (
+      req.body.role != "paymentManager" ||
+      req.body.role != "supportManager"
+    ) {
       return res.json("choose role correctly");
     }
     //jwt
@@ -251,7 +256,8 @@ export async function updateAdmin(req, res, next): Promise<void> {
       }
       const updateAdmin = await Admin.findOneAndUpdate(
         { _id: req.params.id },
-        { $set: req.body }
+        { $set: req.body },
+        { new: true }
       );
 
       return res.json({
@@ -366,7 +372,8 @@ export async function updateUser(req, res, next): Promise<void> {
       }
       const updateUser = await User.findOneAndUpdate(
         { _id: req.params.id },
-        { $set: req.body }
+        { $set: req.body },
+        { new: true }
       );
       return res.json({
         message: "update user successfuly",
@@ -429,6 +436,32 @@ export async function addGame(req, res, next): Promise<void> {
   const imageArr: any = [];
   let imageId: any = [];
   try {
+    if (req.body.category) {
+      const foundCategory = await category.findById(req.body.category);
+      if (!foundCategory) {
+        return res.json({
+          message: "category not found",
+        });
+      }
+    }
+    if (req.body.discount) {
+      const foundDiscount = await Discount.findById(req.body.discount);
+      if (!foundDiscount) {
+        return res.json({
+          message: "discount not found",
+        });
+      }
+      if (foundDiscount.active == false) {
+        return res.json({
+          message: "discount is not active",
+        });
+      }
+      if (foundDiscount.expire < new Date()) {
+        return res.json({
+          message: "discount is expired",
+        });
+      }
+    }
     if (req.files) {
       imageArr.push(req.files.image);
       for (let i = 0; i < imageArr[0].length; i++) {
@@ -468,6 +501,32 @@ export async function updateGame(req, res, next): Promise<void> {
   let imageArr = [];
   let imageId: any = [];
   try {
+    if (req.body.category) {
+      const foundCategory = await category.findById(req.body.category);
+      if (!foundCategory) {
+        return res.json({
+          message: "category not found",
+        });
+      }
+    }
+    if (req.body.discount) {
+      const foundDiscount = await Discount.findById(req.body.discount);
+      if (!foundDiscount) {
+        return res.json({
+          message: "discount not found",
+        });
+      }
+      if (foundDiscount.active == false) {
+        return res.json({
+          message: "discount is not active",
+        });
+      }
+      if (foundDiscount.expire < new Date()) {
+        return res.json({
+          message: "discount is expired",
+        });
+      }
+    }
     if (req.files) {
       imageArr.push(req.files.image);
       for (let i = 0; i < imageArr[0].length; i++) {
@@ -510,14 +569,15 @@ export async function updateGame(req, res, next): Promise<void> {
       //   { $set: imageUpdateType }
       // );
       const gameInfo: GameType = req.body;
-      gameInfo.imageId=imageId
+      gameInfo.imageId = imageId;
       const updateGame = await Game.findOneAndUpdate(
         { _id: req.params.id },
-        { $set: gameInfo}
+        { $set: gameInfo },
+        { new: true }
       );
       return res.json({
         message: "update Game successfuly",
-        gameInfo
+        updateGame,
       });
     } else {
       return res.json({
@@ -549,6 +609,7 @@ export async function deleteGame(req, res, next): Promise<void> {
       await Game.deleteOne({ _id: req.params.id });
       return res.json({
         message: "delete Game successfuly",
+        Game,
       });
     } else {
       return res.json({
@@ -573,9 +634,14 @@ export async function addComment(req, res, next): Promise<void> {
   if (errors.length > 0) {
     return res.status(400).json({ msg: errors[0], success: false });
   }
-
+  const { gameId } = req.body;
+  const foundedGame = await Game.findById(gameId);
+  if (!foundedGame) {
+    return res.json({
+      message: "game not found",
+    });
+  }
   try {
-    
     const commentInfo: CommentType = req.body;
     const comment = await new Comment({
       ...commentInfo,
@@ -583,7 +649,7 @@ export async function addComment(req, res, next): Promise<void> {
     await comment.save();
     return res.json({
       message: comment,
-      result:'added successfully'
+      result: "added successfully",
     });
   } catch (err) {
     next(err);
@@ -654,23 +720,23 @@ export async function addCategory(req, res, next): Promise<void> {
   if (errors.length > 0) {
     return res.status(400).json({ msg: errors[0], success: false });
   }
+  const { name, parentId } = req.body;
+  let imageId: any;
+
   try {
-    const imageArr: any = [];
-    imageArr.push(req.files.image);
-    let imageId: any = [];
+    if (req.files) {
+      await new Image({
+        url: req.files.image[0].filename,
+        alt: req.body.alt,
+        meta: req.body.meta,
+      }).save();
+      imageId = new mongoose.Types.ObjectId();
+    }
 
-    await new Image({
-      url: req.files.image[0].filename,
-      alt: req.body.alt,
-      meta: req.body.meta,
-    }).save();
-    imageId.push(new mongoose.Types.ObjectId());
-
-    const { name, parent } = req.body;
     const category = await new Category({
       name,
       imageId,
-      parent,
+      parentId,
     });
     await category.save();
     return res.json({
@@ -691,14 +757,25 @@ export async function addCategory(req, res, next): Promise<void> {
  * @returns {Promise} returns a json message
  */
 export async function updateCategory(req, res, next): Promise<void> {
+  let imageId: any;
+
+  const { name, parentId } = req.body;
+
   try {
+    if (req.files) {
+      await new Image({
+        url: req.files.image[0].filename,
+        alt: req.body.alt,
+        meta: req.body.meta,
+      }).save();
+      imageId = new mongoose.Types.ObjectId();
+    }
     if (mongoose.Types.ObjectId.isValid(req.params.id)) {
-      const { name, parent, imageId } = req.body;
       await Category.findByIdAndUpdate(req.params.id, {
         $set: {
           name,
           imageId,
-          parent,
+          parentId,
         },
       });
 
@@ -840,14 +917,12 @@ export async function getDiscounts(req, res, next): Promise<void> {
  * @returns {Promise} returns a json message
  */
 export async function AddDiscount(req, res, next): Promise<void> {
-  let isExistDiscount = false;
   const errors = VR(req);
   if (errors.length > 0) {
     return res.status(400).json({ msg: errors[0], success: false });
   }
   try {
     const DiscountInfo: discountType = req.body;
-
     const discount_find = await Discount.findOne({ code: DiscountInfo.code });
     if (discount_find) {
       return res.json("Discount is already taken");
@@ -859,7 +934,8 @@ export async function AddDiscount(req, res, next): Promise<void> {
     await newDiscount.save();
 
     return res.json({
-      message: newDiscount + "\n Discount added successfully",
+      message: "Discount added successfully",
+      newDiscount,
     });
   } catch (error) {
     console.log(error);
@@ -885,7 +961,8 @@ export async function UpdateDiscount(req, res, next): Promise<void> {
       }
       const updateDiscound = await Discount.findOneAndUpdate(
         { _id: req.params.id },
-        { $set: req.body }
+        { $set: req.body },
+        { new: true }
       );
       return res.json({
         message: "update Discound successfuly",
@@ -940,11 +1017,9 @@ export async function deleteDiscount(req, res, next): Promise<void> {
  * @returns {Promise} returns a json message
  */
 export async function getOrders(req, res, next): Promise<void> {
-  
-    const { limit, skip, sort } = req.body;
+  const { limit, skip, sort } = req.body;
   try {
     const allOreders = await Order.find().limit(limit).skip(skip).sort(sort);
-
 
     return res.json({
       message: allOreders,
@@ -1052,7 +1127,8 @@ export async function updateSeller(req, res, next): Promise<void> {
       }
       const updateSeller = await seller.findOneAndUpdate(
         { _id: req.params.id },
-        { $set: req.body }
+        { $set: req.body },
+        { new: true }
       );
       return res.json({
         message: "seller user successfuly",

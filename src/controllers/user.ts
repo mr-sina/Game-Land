@@ -10,6 +10,8 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 import { UserInfo } from "os";
+import discount from "../models/discount";
+import game from "../models/game";
 
 interface UserType {
   firstName: string;
@@ -17,12 +19,19 @@ interface UserType {
   email: string;
   password: string;
 }
-
+interface OrderType {
+  userId: mongoose.Types.ObjectId;
+  items: mongoose.Types.ObjectId[];
+  state: String;
+  deliverMethod: String;
+  paymentMethod: String;
+}
 interface CommentType {
   text: string;
   title: string;
   cons: string[];
   pros: string[];
+  gameId: mongoose.Types.ObjectId;
 }
 
 /**
@@ -127,10 +136,11 @@ export async function addComment(req, res, next): Promise<void> {
     return res.status(400).json({ msg: errors[0], success: false });
   }
   const { userId } = res.auth;
+  const { gameId } = req.body;
   try {
-    const foundComment = await Game.findById(req.params.id);
-    if (!foundComment) {
-      return res.json("Comment not found");
+    const foundGame = await Game.findById(gameId);
+    if (!foundGame) {
+      return res.json("game not found");
     }
     const commentInfo: CommentType = req.body;
     const comment = await new Comment({
@@ -161,7 +171,7 @@ export async function deleteComment(req, res, next): Promise<void> {
   }
   const { userId } = res.auth;
   try {
-    const foundComment = await Game.findById(req.params.id);
+    const foundComment = await Comment.findById(req.params.id);
     if (!foundComment) {
       return res.json("Comment not found");
     }
@@ -188,7 +198,7 @@ export async function deleteComment(req, res, next): Promise<void> {
  */
 export async function cart(req, res, next): Promise<void> {
   try {
-    const userId = req.body.userId;
+    const { userId } = res.auth;
 
     const user = await User.findById(userId);
     if (!user) {
@@ -211,29 +221,41 @@ export async function cart(req, res, next): Promise<void> {
  * @returns {Promise} returns a json message
  */
 export async function addToCart(req, res, next): Promise<void> {
+  const { userId } = res.auth;
+  const { gameId } = req.body;
+
+  const foundGame = await Game.findById(gameId);
+  if (!foundGame) {
+    return res.json("Game not found");
+  }
+  if (foundGame.discount) {
+    const foundDiscount = await discount.findById(foundGame.discount);
+    if (!foundDiscount) {
+      return res.json({
+        message: "game discount not found",
+      });
+    }
+    if (foundDiscount.active == false) {
+      return res.json({
+        message: "game discount is not active",
+      });
+    }
+    if (foundDiscount.expire < new Date()) {
+      return res.json({
+        message: "game discount is expired",
+      });
+    }
+  }
   try {
-    const userId = req.body.userId;
-    const prodId = req.body.GameId;
-
-    const foundGame = await Game.findById(prodId);
-    if (!foundGame) {
-      return res.json("Game not found");
-    }
-
-    const user: any = await User.findById(userId);
-    if (!user) {
-      return res.json("user not found");
-    }
-
-    const newCartItem = await new User({
-      cart: prodId,
-    }).save();
-
-    await user.cart.push(newCartItem);
-    await user.save();
+    const updateUser = await User.findByIdAndUpdate(
+      userId,
+      { $push: { cart: gameId } },
+      { new: true }
+    );
 
     return res.json({
-      newCartItem,
+      message: "added to cart successfully",
+      result: updateUser.cart,
     });
   } catch (err) {
     next(err);
@@ -251,17 +273,22 @@ export async function addToCart(req, res, next): Promise<void> {
 export async function deleteFromCart(req, res, next): Promise<void> {
   try {
     if (mongoose.Types.ObjectId.isValid(req.params.id)) {
-      const userId = req.body.userId;
+      const { userId } = res.auth;
 
-      const user = await User.findById(req.params.id);
+      const user = await User.findById(userId);
       if (!user) {
-        return res.json("cart item not found");
+        return res.json("user not found");
       }
-      user.remove();
 
+      let items = [];
+      let counter = 0;
       let index = user.cart.indexOf(req.params.id);
-      user.items.splice(index, 1);
+      for (const e of user.cart) {
+        if (index != counter) items.push(e);
+        counter++;
+      }
 
+      await user.update({ $set: { cart: items } });
       return res.json({
         message: "delete from cart successfuly",
       });
@@ -285,31 +312,44 @@ export async function deleteFromCart(req, res, next): Promise<void> {
  */
 export async function createOrder(req, res, next): Promise<void> {
   try {
-    const cartitems = [];
-    const cartId = req.body.cartId;
-
-    const foundCart: any = await User.findById(cartId);
-    if (!foundCart) {
-      return res.json("cart not found");
+    let cartItems = [];
+    let totalPrice = 0;
+    const { userId } = res.auth;
+    const { deliverMethod, paymentMethod } = req.body;
+    const foundUser: any = await User.findById(userId);
+    if (!foundUser) {
+      return res.json("user not found");
     }
-    foundCart.items.forEach((item) => {
-      cartitems.push(item);
-    });
+    if (foundUser.cart.length == 0) {
+      return res.json("user cart is empty");
+    }
+    for (let i = 0; i < foundUser.cart.length; i++) {
+      let foundGame = await game.findById(foundUser.cart[i]);
+      if (foundGame.discount) {
+        const foundedDiscount = await discount.findById(foundGame.discount);
+
+        if (
+          foundedDiscount.active != false &&
+          foundedDiscount.expire > new Date() &&
+          foundedDiscount
+        ) {
+          foundGame.price -= (foundedDiscount.percent * foundGame.price) / 100;
+        }
+      }
+      totalPrice += foundGame.price;
+    }
 
     const newOrder = await new Order({
-      userId: "5fc7b0e7f901303484e370c0",
-      state: req.body.state,
-      deliverMethod: req.body.deliverMethod,
-      paymentMethod: req.body.paymentMethod,
-      receiveTime: req.body.receiveTime,
-      item: cartitems,
+      userId,
+      items: foundUser.cart,
+      deliverMethod,
+      paymentMethod,
+      state: "in-progress",
+      totalPrice,
     }).save();
-
-    //payment
-
-    await foundCart.remove();
-
+    // await foundUser.update({ $set: { cart: [] } });
     return res.json({
+      message: "order created successfully",
       newOrder,
     });
   } catch (err) {
@@ -453,7 +493,8 @@ export async function editUser(req, res, next): Promise<void> {
       }
       const updateUser = await User.findOneAndUpdate(
         { _id: req.params.id },
-        { $set: req.body }
+        { $set: req.body },
+        { new: true }
       );
 
       return res.json({

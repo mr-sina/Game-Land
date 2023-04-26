@@ -10,6 +10,8 @@ import {
   edit,
   isAuth,
   comment,
+  order,
+  cart,
 } from "../middlewares/validators/user";
 //login
 router.post("/login", ...login, userController.login);
@@ -19,12 +21,12 @@ router.post("/register", ...signUp, userController.register);
 router.put("/edit", isAuth, ...edit, userController.editUser);
 
 //cart
-router.post("/cart", isAuth, userController.cart);
-router.post("/add-to-cart", isAuth, userController.addToCart);
+router.get("/cart", isAuth, userController.cart);
+router.post("/add-to-cart", isAuth, ...cart, userController.addToCart);
 router.post("/delete-from-cart/:id", isAuth, userController.deleteFromCart);
 
 //order
-router.post("/order", isAuth, userController.createOrder);
+router.post("/create-order", isAuth, order, userController.createOrder);
 
 // //payment
 // router.post("/payment", userController.payment);

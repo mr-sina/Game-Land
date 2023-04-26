@@ -7,6 +7,8 @@ import Image from "../models/image";
 import VR from "../middlewares/validators/validationResult";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import category from "../models/category";
+import discount from "../models/discount";
 
 interface GameInterface {
   imageId: string[];
@@ -15,6 +17,7 @@ interface GameInterface {
   description: string;
   discount: mongoose.Types.ObjectId;
   seller: mongoose.Types.ObjectId;
+  category: mongoose.Types.ObjectId;
 }
 interface SellerInterface {
   email: string;
@@ -172,6 +175,32 @@ export async function createGameSeller(req, res, next) {
   const imageArr: any = [];
   let imageId: any = [];
   try {
+    if (req.body.category) {
+      const foundCategory = await category.findById(req.body.category);
+      if (!foundCategory) {
+        return res.json({
+          message: "category not found",
+        });
+      }
+    }
+    if (req.body.discount) {
+      const foundDiscount = await discount.findById(req.body.discount);
+      if (!foundDiscount) {
+        return res.json({
+          message: "discount not found",
+        });
+      }
+      if (foundDiscount.active == false) {
+        return res.json({
+          message: "discount is not active",
+        });
+      }
+      if (foundDiscount.expire < new Date()) {
+        return res.json({
+          message: "discount is expired",
+        });
+      }
+    }
     if (req.files) {
       imageArr.push(req.files.image);
       for (let i = 0; i < imageArr[0].length; i++) {
@@ -213,6 +242,32 @@ export async function updateGameSeller(req, res, next) {
   const imageArr: any = [];
   let imageId: any = [];
   try {
+    if (req.body.category) {
+      const foundCategory = await category.findById(req.body.category);
+      if (!foundCategory) {
+        return res.json({
+          message: "category not found",
+        });
+      }
+    }
+    if (req.body.discount) {
+      const foundDiscount = await discount.findById(req.body.discount);
+      if (!foundDiscount) {
+        return res.json({
+          message: "discount not found",
+        });
+      }
+      if (foundDiscount.active == false) {
+        return res.json({
+          message: "discount is not active",
+        });
+      }
+      if (foundDiscount.expire < new Date()) {
+        return res.json({
+          message: "discount is expired",
+        });
+      }
+    }
     if (req.files) {
       imageArr.push(req.files.image);
       for (let i = 0; i < imageArr[0].length; i++) {
@@ -237,10 +292,11 @@ export async function updateGameSeller(req, res, next) {
         });
       }
       const updateGameSeller: GameInterface = req.body;
-      updateGameSeller.imageId=imageId
+      updateGameSeller.imageId = imageId;
       const updateGame = await Game.findOneAndUpdate(
         { _id: foundGame._id },
-        { $set: updateGameSeller}
+        { $set: updateGameSeller },
+        { new: true }
       );
       return res.json({
         message: "update Game successfuly",

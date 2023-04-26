@@ -95,7 +95,8 @@ export const createGame = [
   body('price', 'please choose price').not().isEmpty(),
   body('description', 'please choose description').optional(),
   body('discount', 'please choose discount').optional(),
-  body('imageId', 'please choose imageId').optional()
+  body('imageId', 'please choose imageId').optional(),
+  body('category', 'please choose category').optional()
 ]
 export const editGame = [
   body('seller', 'please choose seller').optional(),
@@ -103,17 +104,19 @@ export const editGame = [
   body('price', 'please choose price').optional(),
   body('description', 'please choose description').optional(),
   body('discount', 'please choose discount').optional(),
-  body('imageId', 'please choose imageId').optional()
+  body('imageId', 'please choose imageId').optional(),
+  body('category', 'please choose category').optional()
 ]
 
 export const createDiscount = [
-  body('reason', 'please choose reason').not().isEmpty(),
   body('code', 'please enter the name of the code').not().isEmpty(),
-  body('maxAmount', 'please choose maxAmount').not().isEmpty(),
+  body('maxAmount', 'please choose maxAmount').optional(),
   body('expire', 'please choose expire').not().isEmpty(),
   body('percent', 'please choose percent').not().isEmpty(),
-  body('quantity', 'please choose quantity').not().isEmpty(),
-  body('reason', 'please choose active').not().isEmpty(),
+  body('quantity', 'please choose quantity').optional(),
+  body('reason', 'please choose reason').not().isEmpty(),
+  body('active', 'please choose active').optional(),
+  
 ]
 export const editDiscount = [
   body('reason', 'please choose reason').optional(),
@@ -122,12 +125,13 @@ export const editDiscount = [
   body('expire', 'please choose expire').optional(),
   body('percent', 'please choose percent').optional(),
   body('quantity', 'please choose quantity').optional(),
-  body('reason', 'please choose active').optional(),
+  body('active', 'please choose active').optional(),
 ]
 
 export const category = [
-  body('image', 'please choose image').not().isEmpty(),
-  body('name', 'please enter the name of the category').not().isEmpty()
+  body('image', 'please choose image').optional(),
+  body('name', 'please enter the name of the category').not().isEmpty(),
+
 ]
 
 

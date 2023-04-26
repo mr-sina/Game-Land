@@ -41,7 +41,8 @@ export const Game = [
   body('price', 'please choose price').not().isEmpty(),
   body('description', 'please choose description').optional(),
   body('discount', 'please choose discount').optional(),
-  body('imageId', 'please choose imageId').optional()
+  body('imageId', 'please choose imageId').optional(),
+  body('category', 'please choose category').optional(),
 ]
 
 export const smsAuth = [

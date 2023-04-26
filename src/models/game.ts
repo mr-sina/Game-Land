@@ -8,6 +8,10 @@ const Game: mongoose.Schema = new mongoose.Schema(
       type: ObjectId,
       ref: "Seller",
     },
+    category: {
+        type: ObjectId,
+        ref: "Category"
+      },
     title: {
       type: String,
       default: "",

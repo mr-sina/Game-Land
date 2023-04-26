@@ -63,19 +63,19 @@ router.put("/Game/update/:id", isAuth, APFH , editGame, adminController.updateGa
 router.delete("/Game/delete/:id", isAuth, adminController.deleteGame);
 
 //comment
-router.post("/comment", isAuth, adminController.getComments);
+router.get("/comment", isAuth, adminController.getComments);
 router.post("/comment/create", isAuth, comment, adminController.addComment);
 router.delete("/comment/delete/:id", isAuth, adminController.deleteComment);
 
 //orders
-router.get("/allorders", isAuth, adminController.getOrders);
+router.get("/all-orders", isAuth, adminController.getOrders);
 router.get("/order/:id", isAuth, adminController.getOrder);
 
 //category
 router.post(
   "/category/create",
   isAuth,
-  category,
+  ...category,
   ACFH,
   adminController.addCategory
 );

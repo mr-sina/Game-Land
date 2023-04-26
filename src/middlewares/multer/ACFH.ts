@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
 
   // File Destination
   destination(req, file, cb) {
-    const uploadPath = path.join("uploads");
+    const uploadPath = path.join("uploads","categories");
 
     if (!fs.existsSync(uploadPath)) {
       // if uploda directory not exists, will be create
