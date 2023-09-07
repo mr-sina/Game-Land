@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    image: 'game-land'
+    ports: 
+      - '4040:4040'
+    links:
+      - 'mongo'  
+    volumes:
+      - '/app/gameland-data'
+  mongo:
+    image: mongo:latest
+    environment:
+      - MONGO_DATA_DIR=/data/db
+    volumes:
+      - '/root/db-data/mongo:/data/db'
+    container_name: mongo
+    restart: unless-stopped      
